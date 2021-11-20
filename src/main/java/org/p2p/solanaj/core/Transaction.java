@@ -22,6 +22,11 @@ public class Transaction {
         this.signatures = new ArrayList<String>();
     }
 
+    public Transaction(Message message, List<String> signatures) {
+        this.message = message;
+        this.signatures = signatures;
+    }
+
     public Transaction addInstruction(TransactionInstruction instruction) {
         message.addInstruction(instruction);
 

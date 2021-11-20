@@ -56,7 +56,6 @@ public class Message {
         return this;
     }
 
-
     public TransactionInstruction getInstruction(int index) {
         return instructions.get(index);
     }

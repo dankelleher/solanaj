@@ -9,6 +9,7 @@ import org.bitcoinj.core.Base58;
 import org.p2p.solanaj.utils.ShortvecEncoding;
 
 public class Message {
+
     private class MessageHeader {
         static final int HEADER_LENGTH = 3;
 
@@ -53,6 +54,11 @@ public class Message {
         instructions.add(instruction);
 
         return this;
+    }
+
+
+    public TransactionInstruction getInstruction(int index) {
+        return instructions.get(index);
     }
 
     public void setRecentBlockHash(String recentBlockhash) {

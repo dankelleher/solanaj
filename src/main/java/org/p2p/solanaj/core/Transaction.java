@@ -28,6 +28,10 @@ public class Transaction {
         return this;
     }
 
+    public TransactionInstruction getInstruction(int index) {
+        return message.getInstruction(index);
+    }
+
     public void setRecentBlockHash(String recentBlockhash) {
         message.setRecentBlockHash(recentBlockhash);
     }

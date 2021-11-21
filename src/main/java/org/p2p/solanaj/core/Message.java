@@ -1,11 +1,17 @@
 package org.p2p.solanaj.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.bitcoinj.core.Base58;
 
+import org.p2p.solanaj.utils.ByteUtils;
+import org.p2p.solanaj.utils.ShortvecDecoding;
 import org.p2p.solanaj.utils.ShortvecEncoding;
 
 public class Message {
@@ -35,6 +41,9 @@ public class Message {
         }
     }
 
+
+    private static final int SIGNATURE_LENGTH = 64;
+    private static final int PUBKEY_LENGTH = 32;
     private static final int RECENT_BLOCK_HASH_LENGTH = 32;
 
     private MessageHeader messageHeader;
@@ -46,6 +55,11 @@ public class Message {
     public Message() {
         this.accountKeys = new AccountKeysList();
         this.instructions = new ArrayList<TransactionInstruction>();
+    }
+
+    public Message(AccountKeysList accountKeys, List<TransactionInstruction> instructions) {
+        this.accountKeys = accountKeys;
+        this.instructions = instructions;
     }
 
     public Message addInstruction(TransactionInstruction instruction) {
@@ -62,6 +76,107 @@ public class Message {
 
     public void setRecentBlockHash(String recentBlockhash) {
         this.recentBlockhash = recentBlockhash;
+    }
+
+    private static AccountMeta keyToAccountMeta(
+            int keyIndex,
+            List<PublicKey> keys,
+            int numRequiredSignatures,
+            int numReadonlySignedAccounts,
+            int numReadonlyUnsignedAccounts
+    ) {
+        boolean isSigner = keyIndex < numRequiredSignatures;
+        boolean isWriteable = (
+                keyIndex < (numRequiredSignatures - numReadonlySignedAccounts) ||
+                (keyIndex >= numRequiredSignatures &&
+                        keyIndex < (keys.size() - numReadonlyUnsignedAccounts))
+        );
+
+        return new AccountMeta(keys.get(keyIndex), isSigner, isWriteable);
+    }
+
+    private static TransactionInstruction parseInstruction(
+            ByteArrayInputStream messageBytes,
+            List<PublicKey> keys,
+            int numRequiredSignatures,
+            int numReadonlySignedAccounts,
+            int numReadonlyUnsignedAccounts) throws IOException {
+        byte programIdIndex = (byte) messageBytes.read();
+        byte accountCount = (byte) ShortvecDecoding.decodeLength(messageBytes);
+        byte[] accounts = messageBytes.readNBytes(accountCount);
+        byte dataLength = (byte) ShortvecDecoding.decodeLength(messageBytes);
+        byte[] data = messageBytes.readNBytes(dataLength);
+
+        PublicKey programId = keys.get(programIdIndex);
+
+        List<AccountMeta> accountMetaList = IntStream
+                .range(0, accountCount)
+                .mapToObj(i -> Message.keyToAccountMeta(
+                        accounts[i],
+                        keys,
+                        numRequiredSignatures,
+                        numReadonlySignedAccounts,
+                        numReadonlyUnsignedAccounts)
+                )
+                .collect(Collectors.toList());
+
+        return new TransactionInstruction(programId, accountMetaList, data);
+    }
+
+    public static Message deserialize(ByteArrayInputStream messageBytes) {
+        int numRequiredSignatures = messageBytes.read();
+        int numReadonlySignedAccounts = messageBytes.read();
+        int numReadonlyUnsignedAccounts = messageBytes.read();
+
+        int accountCount = ShortvecDecoding.decodeLength(messageBytes);
+
+        List<PublicKey> accountKeys = IntStream
+                .range(0, accountCount)
+                .mapToObj(i -> ByteUtils.readBytes(messageBytes, PUBKEY_LENGTH))
+                .map(Base58::encode)
+                .map(PublicKey::new)
+                .collect(Collectors.toList());
+
+        String recentBlockhash = Base58.encode(ByteUtils.readBytes(messageBytes, RECENT_BLOCK_HASH_LENGTH));
+
+        int instructionCount = ShortvecDecoding.decodeLength(messageBytes);
+
+        List<TransactionInstruction> instructions = IntStream
+                .range(0, instructionCount)
+                .mapToObj(i -> {
+                    try {
+                        return Message.parseInstruction(messageBytes, accountKeys, numRequiredSignatures, numReadonlySignedAccounts, numReadonlyUnsignedAccounts);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
+        List<AccountMeta> accountMetas = accountKeys
+                .stream()
+                .map(key -> {
+                    boolean isSigner = instructions.stream().anyMatch(
+                            instruction -> instruction.getKeys().stream().anyMatch(
+                                    accountMeta -> accountMeta.getPublicKey().equals(key) && accountMeta.isSigner()
+                            ));
+
+                    boolean isWriteable = instructions.stream().anyMatch(
+                            instruction -> instruction.getKeys().stream().anyMatch(
+                                    accountMeta -> accountMeta.getPublicKey().equals(key) && accountMeta.isWritable()
+                            ));
+
+                    return new AccountMeta(key, isSigner, isWriteable);
+                })
+                .collect(Collectors.toList());
+
+        AccountKeysList accountKeysList = new AccountKeysList();
+        accountKeysList.addAll(accountMetas);
+
+        Message message = new Message(accountKeysList, instructions);
+
+        message.setRecentBlockHash(recentBlockhash);
+
+        return message;
     }
 
     public byte[] serialize() {

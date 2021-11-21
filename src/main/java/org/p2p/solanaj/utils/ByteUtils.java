@@ -2,6 +2,7 @@ package org.p2p.solanaj.utils;
 
 import static org.bitcoinj.core.Utils.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -16,6 +17,14 @@ public class ByteUtils {
         byte[] b = new byte[length];
         System.arraycopy(buf, offset, b, 0, length);
         return b;
+    }
+
+    public static byte[] readBytes(ByteArrayInputStream transactionBytes, int length) {
+        try {
+            return transactionBytes.readNBytes(length);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static BigInteger readUint64(byte[] buf, int offset) {

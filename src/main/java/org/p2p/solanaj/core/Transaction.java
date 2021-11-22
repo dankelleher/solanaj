@@ -1,11 +1,17 @@
 package org.p2p.solanaj.core;
 
+import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.bitcoinj.core.Base58;
+import org.p2p.solanaj.utils.ByteUtils;
+import org.p2p.solanaj.utils.ShortvecDecoding;
 import org.p2p.solanaj.utils.ShortvecEncoding;
 import org.p2p.solanaj.utils.TweetNaclFast;
 
@@ -37,12 +43,24 @@ public class Transaction {
         return message.getInstruction(index);
     }
 
+    public int getInstructionCount() {
+        return message.getInstructionCount();
+    }
+
     public void setRecentBlockHash(String recentBlockhash) {
         message.setRecentBlockHash(recentBlockhash);
     }
 
+    public String getRecentBlockHash() {
+        return message.getRecentBlockHash();
+    }
+
     public void sign(Account signer) {
         sign(Arrays.asList(signer));
+    }
+
+    public PublicKey getFeePayer() {
+        return message.getFeePayer();
     }
 
     public void sign(List<Account> signers) {
@@ -52,7 +70,7 @@ public class Transaction {
         }
 
         Account feePayer = signers.get(0);
-        message.setFeePayer(feePayer);
+        message.setFeePayer(feePayer.getPublicKey());
 
         serializedMessage = message.serialize();
 
@@ -62,6 +80,22 @@ public class Transaction {
 
             signatures.add(Base58.encode(signature));
         }
+    }
+
+    public static Transaction from(String transactionString) {
+        ByteArrayInputStream transactionBytes = new ByteArrayInputStream(Base64.getDecoder().decode(transactionString));
+
+        int signatureCount = ShortvecDecoding.decodeLength(transactionBytes);
+
+        List<String> signatures = IntStream
+                .range(0, signatureCount)
+                .mapToObj(i -> ByteUtils.readBytes(transactionBytes, SIGNATURE_LENGTH))
+                .map(Base58::encode)
+                .collect(Collectors.toList());
+
+        Message message = Message.from(transactionBytes);
+
+        return new Transaction(message, signatures);
     }
 
     public byte[] serialize() {

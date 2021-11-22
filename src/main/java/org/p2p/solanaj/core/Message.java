@@ -16,7 +16,7 @@ import org.p2p.solanaj.utils.ShortvecEncoding;
 
 public class Message {
 
-    private class MessageHeader {
+    private static class MessageHeader {
         static final int HEADER_LENGTH = 3;
 
         byte numRequiredSignatures = 0;
@@ -28,7 +28,7 @@ public class Message {
         }
     }
 
-    private class CompiledInstruction {
+    private static class CompiledInstruction {
         byte programIdIndex;
         byte[] keyIndicesCount;
         byte[] keyIndices;
@@ -50,7 +50,7 @@ public class Message {
     private String recentBlockhash;
     private AccountKeysList accountKeys;
     private List<TransactionInstruction> instructions;
-    private Account feePayer;
+    private PublicKey feePayer;
 
     public Message() {
         this.accountKeys = new AccountKeysList();
@@ -74,8 +74,20 @@ public class Message {
         return instructions.get(index);
     }
 
+    public int getInstructionCount() {
+        return instructions.size();
+    }
+
     public void setRecentBlockHash(String recentBlockhash) {
         this.recentBlockhash = recentBlockhash;
+    }
+
+    public String getRecentBlockHash() {
+        return recentBlockhash;
+    }
+
+    public PublicKey getFeePayer() {
+        return feePayer;
     }
 
     private static AccountMeta keyToAccountMeta(
@@ -123,7 +135,7 @@ public class Message {
         return new TransactionInstruction(programId, accountMetaList, data);
     }
 
-    public static Message deserialize(ByteArrayInputStream messageBytes) {
+    public static Message from(ByteArrayInputStream messageBytes) {
         int numRequiredSignatures = messageBytes.read();
         int numReadonlySignedAccounts = messageBytes.read();
         int numReadonlyUnsignedAccounts = messageBytes.read();
@@ -175,6 +187,10 @@ public class Message {
         Message message = new Message(accountKeysList, instructions);
 
         message.setRecentBlockHash(recentBlockhash);
+
+        if (accountKeys.size() > 0) {
+            message.setFeePayer(accountKeys.get(0));
+        }
 
         return message;
     }
@@ -262,13 +278,13 @@ public class Message {
         return out.array();
     }
 
-    protected void setFeePayer(Account feePayer) {
+    protected void setFeePayer(PublicKey feePayer) {
         this.feePayer = feePayer;
     }
 
     private List<AccountMeta> getAccountKeys() {
         List<AccountMeta> keysList = accountKeys.getList();
-        int feePayerIndex = findAccountIndex(keysList, feePayer.getPublicKey());
+        int feePayerIndex = findAccountIndex(keysList, feePayer);
 
         List<AccountMeta> newList = new ArrayList<AccountMeta>();
         AccountMeta feePayerMeta = keysList.get(feePayerIndex);

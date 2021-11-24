@@ -58,11 +58,15 @@ public class RpcApi {
 
     public String sendTransaction(Transaction transaction, List<Account> signers, String recentBlockHash)
             throws RpcException {
-        if (recentBlockHash == null) {
-            recentBlockHash = getRecentBlockhash();
+        if (transaction.getRecentBlockHash() == null) {
+            if (recentBlockHash == null) {
+                recentBlockHash = getRecentBlockhash();
+            }
+            transaction.setRecentBlockHash(recentBlockHash);
+            transaction.sign(signers);
+        } else {
+            transaction.signSerializedMessage(signers);
         }
-        transaction.setRecentBlockHash(recentBlockHash);
-        transaction.sign(signers);
         byte[] serializedTransaction = transaction.serialize();
 
         String base64Trx = Base64.getEncoder().encodeToString(serializedTransaction);

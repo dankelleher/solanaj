@@ -74,6 +74,10 @@ public class Transaction {
 
         serializedMessage = message.serialize();
 
+        signSerializedMessage(signers);
+    }
+
+    public void signSerializedMessage(List<Account> signers) {
         for (Account signer : signers) {
             TweetNaclFast.Signature signatureProvider = new TweetNaclFast.Signature(new byte[0], signer.getSecretKey());
             byte[] signature = signatureProvider.detached(serializedMessage);

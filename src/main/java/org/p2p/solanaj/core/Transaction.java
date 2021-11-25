@@ -63,6 +63,10 @@ public class Transaction {
         return message.getFeePayer();
     }
 
+    public void setFeePayer(PublicKey feePayer) {
+        message.setFeePayer(feePayer);
+    }
+
     public void sign(List<Account> signers) {
 
         if (signers.size() == 0) {

@@ -28,6 +28,11 @@ public class TransactionBuilder {
         return this;
     }
 
+    public TransactionBuilder setFeePayer(PublicKey feePayer) {
+        transaction.setFeePayer(feePayer);
+        return this;
+    }
+
     public Transaction build() {
         return transaction;
     }

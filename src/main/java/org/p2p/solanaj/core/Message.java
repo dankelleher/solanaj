@@ -286,6 +286,10 @@ public class Message {
         List<AccountMeta> keysList = accountKeys.getList();
         int feePayerIndex = findAccountIndex(keysList, feePayer);
 
+        if (feePayerIndex == -1) {
+            keysList.add(new AccountMeta(feePayer, true, true));
+        }
+
         List<AccountMeta> newList = new ArrayList<AccountMeta>();
         AccountMeta feePayerMeta = keysList.get(feePayerIndex);
         newList.add(new AccountMeta(feePayerMeta.getPublicKey(), true, true));
@@ -302,6 +306,6 @@ public class Message {
             }
         }
 
-        throw new RuntimeException("unable to find account index");
+        return -1;
     }
 }

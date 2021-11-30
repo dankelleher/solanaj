@@ -63,6 +63,14 @@ public class Transaction {
         return message.getFeePayer();
     }
 
+    public byte[] getSerializedMessage() {
+        return serializedMessage;
+    }
+
+    void setSerializedMessage(byte[] serializedMessage) {
+        this.serializedMessage = serializedMessage;
+    }
+
     public void setFeePayer(PublicKey feePayer) {
         message.setFeePayer(feePayer);
     }
@@ -103,9 +111,17 @@ public class Transaction {
                 .map(Base58::encode)
                 .collect(Collectors.toList());
 
-        Message message = Message.from(transactionBytes);
+        // set the message serialized bytes
+        // so that it is not recreated (which would invalidate previous signatures)
+        byte[] serializedMessage = ByteUtils.readBytes(transactionBytes, transactionBytes.available());
+        ByteArrayInputStream messageBytes = new ByteArrayInputStream(serializedMessage);
 
-        return new Transaction(message, signatures);
+        Message message = Message.from(messageBytes);
+
+        Transaction transaction = new Transaction(message, signatures);
+        transaction.setSerializedMessage(serializedMessage);
+
+        return transaction;
     }
 
     public byte[] serialize() {

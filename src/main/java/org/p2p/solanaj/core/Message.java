@@ -282,7 +282,7 @@ public class Message {
         this.feePayer = feePayer;
     }
 
-    private List<AccountMeta> getAccountKeys() {
+    public List<AccountMeta> getAccountKeys() {
         List<AccountMeta> keysList = accountKeys.getList();
         int feePayerIndex = findAccountIndex(keysList, feePayer);
 

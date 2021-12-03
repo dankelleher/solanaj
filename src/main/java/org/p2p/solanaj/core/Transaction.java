@@ -63,6 +63,14 @@ public class Transaction {
         return message.getFeePayer();
     }
 
+    public List<String> getSignatures() {
+        return signatures;
+    }
+
+    public Message getMessage() {
+        return message;
+    }
+
     public byte[] getSerializedMessage() {
         return serializedMessage;
     }

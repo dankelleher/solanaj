@@ -18,6 +18,7 @@ import com.squareup.moshi.Types;
 import org.p2p.solanaj.rpc.types.RpcRequest;
 import org.p2p.solanaj.rpc.types.RpcResponse;
 import org.p2p.solanaj.rpc.types.WeightedEndpoint;
+import org.p2p.solanaj.rpc.types.config.RpcClientConfig;
 
 import javax.net.ssl.*;
 
@@ -33,14 +34,15 @@ public class RpcClient {
     }
 
     public RpcClient(Cluster endpoint) {
-        this(endpoint.getEndpoint());
+        this(endpoint.getEndpoint(), new RpcClientConfig());
     }
 
-    public RpcClient(String endpoint) {
+    public RpcClient(String endpoint, RpcClientConfig config) {
         this.endpoint = endpoint;
         this.httpClient = new OkHttpClient.Builder()
-                .readTimeout(20, TimeUnit.SECONDS)
-                //.addInterceptor(new LoggingInterceptor())
+                .readTimeout(config.readTimeout, TimeUnit.SECONDS)
+                .connectTimeout(config.connectionTimeout, TimeUnit.SECONDS)
+                .addInterceptor(new LoggingInterceptor())
                 .build();
         rpcApi = new RpcApi(this);
     }

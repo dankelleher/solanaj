@@ -63,7 +63,14 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
 
         try {
             endpointURI = new URI(endpoint);
-            serverURI = new URI(endpointURI.getScheme() == "https" ? "wss" : "ws" + "://" + endpointURI.getHost());
+            String host = endpointURI.getHost();
+
+            // if the port is the standard http port for a Solana RPC endpoint,
+            // use the standard ws port. Otherwise just use the same port.
+            int port = endpointURI.getPort() == 8899 ? 8900 : endpointURI.getPort();
+
+            String scheme = endpointURI.getScheme().equals("https") ? "wss" : "ws";
+            serverURI = new URI(scheme + "://" + host + ":" + port);
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
         }

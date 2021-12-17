@@ -70,7 +70,11 @@ public class SubscriptionWebSocketClient extends WebSocketClient {
             int port = endpointURI.getPort() == 8899 ? 8900 : endpointURI.getPort();
 
             String scheme = endpointURI.getScheme().equals("https") ? "wss" : "ws";
-            String uri = scheme + "://" + host + ":" + port;
+
+            // if the port is missing from the original endpoint, don't add one
+            String portString = port > 0 ? ":" + port : "";
+
+            String uri = scheme + "://" + host + portString;
 
             serverURI = new URI(uri);
         } catch (URISyntaxException e) {

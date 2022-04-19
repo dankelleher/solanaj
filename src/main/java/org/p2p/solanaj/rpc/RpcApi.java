@@ -49,14 +49,14 @@ public class RpcApi {
 
     public String sendTransaction(Transaction transaction, Account signer, String recentBlockHash) throws
             RpcException {
-        return sendTransaction(transaction, Collections.singletonList(signer), recentBlockHash);
+        return sendTransaction(transaction, Collections.singletonList(signer), recentBlockHash, new RpcSendTransactionConfig());
     }
 
     public String sendTransaction(Transaction transaction, Account signer) throws RpcException {
-        return sendTransaction(transaction, Collections.singletonList(signer), null);
+        return sendTransaction(transaction, Collections.singletonList(signer), null, new RpcSendTransactionConfig());
     }
 
-    public String sendTransaction(Transaction transaction, List<Account> signers, String recentBlockHash)
+    public String sendTransaction(Transaction transaction, List<Account> signers, String recentBlockHash, RpcSendTransactionConfig config)
             throws RpcException {
         if (transaction.getRecentBlockHash() == null) {
             if (recentBlockHash == null) {
@@ -74,14 +74,14 @@ public class RpcApi {
         List<Object> params = new ArrayList<Object>();
 
         params.add(base64Trx);
-        params.add(new RpcSendTransactionConfig());
+        params.add(config);
 
         return client.call("sendTransaction", params, String.class);
     }
 
-    public void sendAndConfirmTransaction(Transaction transaction, List<Account> signers,
+    public void sendAndConfirmTransaction(Transaction transaction, List<Account> signers, RpcSendTransactionConfig config,
             NotificationEventListener listener) throws RpcException {
-        String signature = sendTransaction(transaction, signers, null);
+        String signature = sendTransaction(transaction, signers, null, config);
 
         SubscriptionWebSocketClient subClient = SubscriptionWebSocketClient.getInstance(client.getEndpoint());
         subClient.signatureSubscribe(signature, listener);

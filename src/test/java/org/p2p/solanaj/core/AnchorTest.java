@@ -7,6 +7,7 @@ import org.p2p.solanaj.programs.anchor.AnchorBasicTutorialProgram;
 import org.p2p.solanaj.rpc.Cluster;
 import org.p2p.solanaj.rpc.RpcClient;
 import org.p2p.solanaj.rpc.RpcException;
+import org.p2p.solanaj.rpc.types.config.RpcSendTransactionConfig;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class AnchorTest extends AccountBasedTest {
         final List<Account> signers = List.of(feePayer);
         String result = null;
         try {
-            result = client.getApi().sendTransaction(transaction, signers, null);
+            result = client.getApi().sendTransaction(transaction, signers, null, new RpcSendTransactionConfig());
         } catch (RpcException e) {
             e.printStackTrace();
         }

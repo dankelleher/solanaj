@@ -19,10 +19,39 @@ public class RpcSendTransactionConfig {
 
     }
 
+    public RpcSendTransactionConfig(Encoding encoding, boolean skipPreFlight) {
+        this.encoding = encoding;
+        this.skipPreFlight = skipPreFlight;
+    }
+
+    public RpcSendTransactionConfig() {}
+
     @Json(name = "encoding")
     private Encoding encoding = Encoding.base64;
 
     @Json(name ="skipPreflight")
     private boolean skipPreFlight = true;
 
+    private static class RpcSendTransactionConfigBuilder {
+        private Encoding encoding = Encoding.base64;
+        private boolean skipPreFlight = true;
+
+        public RpcSendTransactionConfigBuilder setEncoding(Encoding encoding) {
+            this.encoding = encoding;
+            return this;
+        }
+
+        public RpcSendTransactionConfigBuilder setSkipPreFlight(boolean skipPreFlight) {
+            this.skipPreFlight = skipPreFlight;
+            return this;
+        }
+
+        public RpcSendTransactionConfig build() {
+            return new RpcSendTransactionConfig(encoding, skipPreFlight);
+        }
+    }
+
+    public static RpcSendTransactionConfigBuilder builder() {
+        return new RpcSendTransactionConfigBuilder();
+    }
 }

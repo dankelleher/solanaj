@@ -32,7 +32,7 @@ public class RpcSendTransactionConfig {
     @Json(name ="skipPreflight")
     private boolean skipPreFlight = true;
 
-    private static class RpcSendTransactionConfigBuilder {
+    public static class RpcSendTransactionConfigBuilder {
         private Encoding encoding = Encoding.base64;
         private boolean skipPreFlight = true;
 
